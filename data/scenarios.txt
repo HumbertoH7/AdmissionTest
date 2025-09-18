@@ -1,0 +1,21 @@
+# Scenario format:
+#   <Scenario name> -> <target sum>
+#   <label>: <space separated integers>
+#   blank line separates scenarios
+
+WarehouseLoad -> 47
+Alpha: 12 9 5 8
+Beta: 7 6 15
+Gamma: 11 13 4 18
+
+TransportPuzzle -> 63
+North: 5 21 16 9
+South: 8 14 11
+East: 7 19 23
+West: 6 5 17 18
+
+LegacyMigration -> 52
+BatchA: 4 18 20 11
+BatchB: 9 7 16
+BatchC: 8 15 5 12
+BatchD: 6 10 14
