@@ -75,11 +75,16 @@ O arquivo inclui outros cenários (como `LegacyMigration`) para validar decisõe
    - A saída deve ser fácil de ler e comparar.
 
 5. **Documentar decisões**
-   - Adicione um `SOLUTIONS.md` resumindo:
+   - Adicione um `SOLUTIONS.md` resumindo(a lista abaixo são sugestões, sinta-se livre para escolher o que for mais relevante):
      - Como você organizou o parsing.
      - Como implementou o algoritmo (complexidade, trade-offs).
      - Testes/checagens manuais executados.
+     - Qualquer suposição ou decisão técnica relevante.
+     - Qual foi sua linha de raciocínio ao longo do processo.
 
+6. **Commit**
+   - Crie uma branch `solution/{seu_nome}`.
+   - Faça commits frequentes com mensagens claras.
 ## Regras importantes
 
 - **Não** remova os cenários nem simplifique o problema.
