@@ -1,6 +1,6 @@
-namespace AdmissionTest.Core.Solving;
-
 using System.Text;
+
+namespace AdmissionTest.Core.Solving;
 
 public static class ReportFormatter
 {
@@ -13,3 +13,4 @@ public static class ReportFormatter
         yield return $" Chosen values: [{string.Join(", ", result.ChosenValues)}]";
     }
 }
+
