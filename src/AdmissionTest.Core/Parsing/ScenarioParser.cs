@@ -1,88 +1,72 @@
-namespace AdmissionTest.Core.Parsing;
-
+using System;
+using System.Collections.Generic;
+using System.Linq;
 using AdmissionTest.Core.Models;
 
-internal static class ScenarioParser
+namespace AdmissionTest.Core.Parsing;
+
+public interface IScenarioParser
 {
-    public static Scenario ParseBlock(IReadOnlyList<string> block)
+    IReadOnlyList<Scenario> Parse(IReadOnlyList<string> lines);
+}
+
+public sealed class ScenarioFileParser : IScenarioParser
+{
+    public IReadOnlyList<Scenario> Parse(IReadOnlyList<string> lines)
     {
-        if (block.Count == 0)
+        if (lines is null || lines.Count == 0)
+            throw new ParseException("Input is empty.");
+
+        var cleaned = lines
+            .Select((t, i) => (text: t, lineNo: i + 1))
+            .Where(x => !x.text.IsCommentOrBlank())
+            .ToList();
+
+        if (cleaned.Count == 0)
+            throw new ParseException("No scenarios found (only comments/blank lines).");
+
+        var blocks = new List<(int headerLine, List<string> texts)>();
+
+        for (int i = 0; i < cleaned.Count;)
         {
-            throw new ArgumentException("Scenario block cannot be empty.", nameof(block));
-        }
+            if (!cleaned[i].text.Contains("->"))
+                throw new ParseException("Expected scenario header '<Name> -> <target>'.", cleaned[i].lineNo);
 
-        var header = ParseHeader(block[0]);
-        var sequences = ParseSequences(block.Skip(1));
+            var headerLineNo = cleaned[i].lineNo;
+            var texts = new List<string> { cleaned[i].text };
+            i++;
 
-        return new Scenario
-        {
-            Name = header.name,
-            TargetValue = header.target,
-            Sequences = sequences
-        };
-    }
-
-    private static (string name, int target) ParseHeader(string raw)
-    {
-        var parts = raw.Split("->", StringSplitOptions.TrimEntries | StringSplitOptions.RemoveEmptyEntries);
-        if (parts.Length != 2)
-        {
-            throw new FormatException($"Invalid scenario header: '{raw}'. Expected 'Name -> Target'.");
-        }
-
-        if (!int.TryParse(parts[1], out var target))
-        {
-            throw new FormatException($"Invalid numeric target in scenario header: '{raw}'.");
-        }
-
-        return (parts[0], target);
-    }
-
-    private static IReadOnlyList<Sequence> ParseSequences(IEnumerable<string> rawLines)
-    {
-        var sequences = new List<Sequence>();
-
-        foreach (var line in rawLines)
-        {
-            if (IsIgnorable(line))
+            while (i < cleaned.Count && !cleaned[i].text.Contains("->"))
             {
-                continue;
+                texts.Add(cleaned[i].text);
+                i++;
             }
 
-            var sequence = ParseSequence(line);
-            sequences.Add(sequence);
+            if (texts.Count == 1)
+                throw new ParseException("Scenario has no sequences.", headerLineNo);
+
+            blocks.Add((headerLineNo, texts));
         }
 
-        return sequences;
-    }
+        var scenarios = new List<Scenario>(blocks.Count);
 
-    private static Sequence ParseSequence(string raw)
-    {
-        var parts = raw.Split(':', 2, StringSplitOptions.TrimEntries | StringSplitOptions.RemoveEmptyEntries);
-        if (parts.Length != 2)
+        foreach (var (headerLine, texts) in blocks)
         {
-            throw new FormatException($"Invalid sequence definition: '{raw}'. Expected 'Label: numbers...'.");
+            try
+            {
+                var scenario = ScenarioParser.ParseBlock(texts);
+                scenarios.Add(scenario);
+            }
+            catch (FormatException ex)
+            {
+                throw new ParseException(ex.Message, headerLine);
+            }
+            catch (ArgumentException ex)
+            {
+                throw new ParseException(ex.Message, headerLine);
+            }
         }
 
-        var numbers = ParseNumbers(parts[1]);
-        return new Sequence
-        {
-            Label = parts[0],
-            Values = numbers
-        };
-    }
-
-    private static IReadOnlyList<int> ParseNumbers(string raw)
-    {
-        return raw
-            .Split(' ', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries)
-            .Select(static token => int.Parse(token, provider: null))
-            .ToList();
-    }
-
-    private static bool IsIgnorable(string line)
-    {
-        var trimmed = line.Trim();
-        return trimmed.Length == 0 || trimmed.StartsWith('#');
+        return scenarios;
     }
 }
