@@ -1,6 +1,9 @@
-namespace AdmissionTest.Core.Solving;
-
+using System;
+using System.Collections.Generic;
+using System.Linq;
 using AdmissionTest.Core.Models;
+
+namespace AdmissionTest.Core.Solving;
 
 public sealed partial class ScenarioSolver
 {
